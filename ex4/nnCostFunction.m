@@ -73,20 +73,32 @@ X = [ones(m, 1), X]'; %401x5000
 ym = ([1:num_labels] == y)'; %10x5000
 oneDivM = 1 / m;
 lDiv2m = lambda / (2 * m);
+D1 = zeros(size(Theta1)); %25x401
+D2 = zeros(size(Theta2)); %10x26
 
 %Feedforward
 z2 = Theta1 * X; %25x401 * 401x5000 = 25x5000
 a2NB = sigmoid(z2); %25x5000
 a2 = [ones(1, m); a2NB]; %26x5000
 z3 = Theta2 * a2; %10x26 * 26x5000 = 10x5000
-g = sigmoid(z3); %10x5000
-err = (-ym .* log(g)) - ((1-ym) .* log(1-g)); %10x5000
+a3 = sigmoid(z3); %10x5000
+cost = (-ym .* log(a3)) - ((1-ym) .* log(1-a3)); %10x5000
 regSumTh1 = sum(sum(Theta1(:,2:end).^2));
 regSumTh2 = sum(sum(Theta2(:,2:end).^2));
 regTerm = regSumTh1 + regSumTh2;
-J = oneDivM * sum(sum(err)) + lDiv2m * regTerm; %1x1
+J = oneDivM * sum(sum(cost)) + lDiv2m * regTerm; %1x1
 
 %Backpropagation
+d3 = a3 - ym; %10x5000
+d2 = (Theta2' * d3)(2:end ,:) .* sigmoidGradient(z2); %25x10 * 10x5000 .* 25x5000 = 25x5000
+D2 = D2 + d3 * a2'; %10x26 + 10x5000 * 5000x26
+D1 = D1 + d2 * X'; %25x401 + 25x5000 * 5000x401
+regTermD2 = lambda * Theta2(:, 2:end);
+regTermD1 = lambda * Theta1(:, 2:end);
+D2 = [D2(:, 1), D2(:, 2:end) + regTermD2];
+D1 = [D1(:, 1), D1(:, 2:end) + regTermD1];
+Theta2_grad = oneDivM * D2; %10x26
+Theta1_grad = oneDivM * D1; %25x401
 
 % Unroll gradients
 grad = [Theta1_grad(:) ; Theta2_grad(:)];
