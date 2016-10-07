@@ -16,6 +16,11 @@ function [J grad] = nnCostFunction(nn_params, ...
 
 % Reshape nn_params back into the parameters Theta1 and Theta2, the weight matrices
 % for our 2 layer neural network
+
+%input_layer_size = 400
+%hidden_layer_size = 25
+%num_labels = 10
+
 Theta1 = reshape(nn_params(1:hidden_layer_size * (input_layer_size + 1)), ...
                  hidden_layer_size, (input_layer_size + 1));
 
@@ -61,28 +66,27 @@ Theta2_grad = zeros(size(Theta2));
 %               the regularization separately and then add them to Theta1_grad
 %               and Theta2_grad from Part 2.
 %
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-% -------------------------------------------------------------
-
 % =========================================================================
+% Theta1 25x401
+% Theta2 10x26
+X = [ones(m, 1), X]'; %401x5000
+ym = ([1:num_labels] == y)'; %10x5000
+oneDivM = 1 / m;
+lDiv2m = lambda / (2 * m);
+
+%Feedforward
+z2 = Theta1 * X; %25x401 * 401x5000 = 25x5000
+a2NB = sigmoid(z2); %25x5000
+a2 = [ones(1, m); a2NB]; %26x5000
+z3 = Theta2 * a2; %10x26 * 26x5000 = 10x5000
+g = sigmoid(z3); %10x5000
+err = (-ym .* log(g)) - ((1-ym) .* log(1-g)); %10x5000
+regSumTh1 = sum(sum(Theta1(:,2:end).^2));
+regSumTh2 = sum(sum(Theta2(:,2:end).^2));
+regTerm = regSumTh1 + regSumTh2;
+J = oneDivM * sum(sum(err)) + lDiv2m * regTerm; %1x1
+
+%Backpropagation
 
 % Unroll gradients
 grad = [Theta1_grad(:) ; Theta2_grad(:)];
